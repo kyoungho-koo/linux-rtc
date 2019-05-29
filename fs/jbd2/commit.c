@@ -422,8 +422,10 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 				       stats.run.rs_locked);
 	stats.run.rs_running = jbd2_time_diff(commit_transaction->t_start,
 					      stats.run.rs_locked);
-
+	
+    u64 critical_time = ktime_get();
 	spin_lock(&commit_transaction->t_handle_lock);
+	int t_updates = atomic_read(&commit_transaction->t_updates);
 	while (atomic_read(&commit_transaction->t_updates)) {
 		DEFINE_WAIT(wait);
 
@@ -439,6 +441,7 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 		finish_wait(&journal->j_wait_updates, &wait);
 	}
 	spin_unlock(&commit_transaction->t_handle_lock);
+    critical_time = ktime_to_ns(ktime_sub(ktime_get(), critical_time));
 
 	J_ASSERT (atomic_read(&commit_transaction->t_outstanding_credits) <=
 			journal->j_max_transaction_buffers);
@@ -1116,6 +1119,11 @@ restart_loop:
 	 * Calculate overall stats
 	 */
 	spin_lock(&journal->j_history_lock);
+    printk("[{ \'tid\' : %lu , \'t_updates\' : %d , \'commit_time\' : %d ,      \'critical_time\' : %d }]"
+       ,journal->j_stats.ts_tid++
+       ,t_updates
+       ,commit_time
+       ,critical_time);
 	journal->j_stats.ts_tid++;
 	journal->j_stats.ts_requested += stats.ts_requested;
 	journal->j_stats.run.rs_wait += stats.run.rs_wait;
