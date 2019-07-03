@@ -184,11 +184,11 @@ static int add_transaction_credits(journal_t *journal, int blocks,
 	/*
 	 * If the current transaction is locked down for commit, wait
 	 * for the lock to be released.
-	 */
 	if (t->t_state == T_LOCKED) {
 		wait_transaction_locked(journal);
 		return 1;
 	}
+	 */
 
 	/*
 	 * If there is not enough space left in the log to write all
