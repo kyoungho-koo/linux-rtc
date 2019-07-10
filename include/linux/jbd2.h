@@ -790,7 +790,7 @@ struct journal_s
 	 * @j_barrier: The barrier lock itself.
 	 */
 	struct mutex		j_barrier;
-
+  
 	/**
 	 * @j_running_transaction:
 	 *
@@ -798,6 +798,14 @@ struct journal_s
 	 * [j_state_lock] [caller holding open handle]
 	 */
 	transaction_t		*j_running_transaction;
+
+    /**                                                                                                               
+     * @j_rtc_transaction:
+     *
+     * Transactions: Ready To Commit transaction...
+     * [j_state_lock]
+     */
+    transaction_t       *j_rtc_transaction;
 
 	/**
 	 * @j_committing_transaction:

@@ -411,6 +411,9 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 	write_lock(&journal->j_state_lock);
 	J_ASSERT(commit_transaction->t_state == T_RUNNING);
 	commit_transaction->t_state = T_LOCKED;
+    journal->j_rtc_transaction = commit_transaction;
+    journal->j_running_transaction = NULL;
+
 
 	trace_jbd2_commit_locking(journal, commit_transaction);
 	stats.run.rs_wait = commit_transaction->t_max_wait;
@@ -515,7 +518,7 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 
 	commit_transaction->t_state = T_FLUSH;
 	journal->j_committing_transaction = commit_transaction;
-	journal->j_running_transaction = NULL;
+	journal->j_rtc_transaction = NULL;
 	start_time = ktime_get();
 	commit_transaction->t_log_start = journal->j_head;
 	wake_up(&journal->j_wait_transaction_locked);
