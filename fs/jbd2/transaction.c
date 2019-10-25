@@ -186,6 +186,7 @@ static int add_transaction_credits(journal_t *journal, int blocks,
 	 * for the lock to be released.
 	 */
 	if (t->t_state == T_LOCKED) {
+	    printk("wait in the Queue for T_LOCKED\n");
 		wait_transaction_locked(journal);
 		return 1;
 	}
