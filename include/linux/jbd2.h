@@ -708,6 +708,8 @@ struct transaction_s
 	 * structures associated with the transaction
 	 */
 	struct list_head	t_private_list;
+
+	int rtc_flag;
 };
 
 struct transaction_run_stats_s {
@@ -1582,6 +1584,14 @@ static inline unsigned long jbd2_log_space_left(journal_t *journal)
 		/* Transaction + control blocks */
 		free -= committing + (committing >> JBD2_CONTROL_BLOCKS_SHIFT);
 	}
+	if (journal->j_rtc_transaction) {
+	    unsigned long readyToCommit = atomic_read(&journal->
+			j_rtc_transaction->t_outstanding_credits);
+
+		/* Transaction + control blocks */
+		free -= readyToCommit + (readyToCommit >> JBD2_CONTROL_BLOCKS_SHIFT);
+
+	}
 	return free;
 }
 
@@ -1644,7 +1654,7 @@ static inline tid_t  jbd2_get_latest_transaction(journal_t *journal)
 #define print_buffer_trace(bh)	do {} while (0)
 #define BUFFER_TRACE(bh, info)	do {} while (0)
 #define BUFFER_TRACE2(bh, bh2, info)	do {} while (0)
-#define JBUFFER_TRACE(jh, info)	do {} while (0)
+#define JBUFFER_TRACE(jh, info)	do {/*printk("JBUFFER_TRACE : jh %p , %s",jh,info);*/} while (0)
 
 #endif	/* __KERNEL__ */
 

@@ -410,9 +410,12 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 
 	write_lock(&journal->j_state_lock);
 	J_ASSERT(commit_transaction->t_state == T_RUNNING);
-	commit_transaction->t_state = T_LOCKED;
-    journal->j_rtc_transaction = commit_transaction;
+
+	//printk("1. t_nr_buffers : %d , t_outstanding_credits : %d\n",commit_transaction->t_nr_buffers , atomic_read(&commit_transaction->t_outstanding_credits));
     journal->j_running_transaction = NULL;
+    journal->j_rtc_transaction = commit_transaction;
+	commit_transaction->t_state = T_LOCKED;
+    //printk("2. t_nr_buffers : %d , t_outstanding_credits : %d\n",commit_transaction->t_nr_buffers ,atomic_read(&commit_transaction->t_outstanding_credits));
 
 
 	trace_jbd2_commit_locking(journal, commit_transaction);
@@ -468,6 +471,7 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 	while (commit_transaction->t_reserved_list) {
 		jh = commit_transaction->t_reserved_list;
 		JBUFFER_TRACE(jh, "reserved, unused: refile");
+		printk("reserved,unused refile");
 		/*
 		 * A jbd2_journal_get_undo_access()+jbd2_journal_release_buffer() may
 		 * leave undo-committed data.
@@ -522,6 +526,16 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 	start_time = ktime_get();
 	commit_transaction->t_log_start = journal->j_head;
 	wake_up(&journal->j_wait_transaction_locked);
+/*	
+	transaction_t *tmp;
+	if ((tmp = journal->j_running_transaction) && tmp->rtc_flag) {
+	  tmp->t_expires = jiffies + journal->j_commit_interval;
+      // Set up the commit timer for the new transaction. 
+	  journal->j_commit_timer.expires = round_jiffies_up(tmp->t_expires);
+	  add_timer(&journal->j_commit_timer);
+	}
+*/
+	printk("T_LOCKED done");
 	write_unlock(&journal->j_state_lock);
 
 	jbd_debug(3, "JBD2: commit phase 2a\n");
@@ -545,6 +559,7 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 	 * metadata.  Loop over the transaction's entire buffer list:
 	 */
 	write_lock(&journal->j_state_lock);
+	printk("T_COMMIT start");
 	commit_transaction->t_state = T_COMMIT;
 	write_unlock(&journal->j_state_lock);
 
@@ -556,8 +571,15 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 		atomic_read(&commit_transaction->t_outstanding_credits);
 	stats.run.rs_blocks_logged = 0;
 
-	J_ASSERT(commit_transaction->t_nr_buffers <=
+	/*J_ASSERT(commit_transaction->t_nr_buffers <=
 		 atomic_read(&commit_transaction->t_outstanding_credits));
+		 */
+	if (!(commit_transaction->t_nr_buffers <=
+		 atomic_read(&commit_transaction->t_outstanding_credits)))
+	{
+	 printk("t_nr_buffers > t_outstanding_credits)");
+	}
+
 
 	err = 0;
 	bufs = 0;
@@ -1114,6 +1136,7 @@ restart_loop:
 		__jbd2_journal_drop_transaction(journal, commit_transaction);
 		jbd2_journal_free_transaction(commit_transaction);
 	}
+	
 	spin_unlock(&journal->j_list_lock);
 	write_unlock(&journal->j_state_lock);
 	wake_up(&journal->j_wait_done_commit);
@@ -1123,7 +1146,7 @@ restart_loop:
 	 */
 	spin_lock(&journal->j_history_lock);
     printk("[{ \'tid\' : %lu , \'t_updates\' : %d , \'commit_time\' : %d ,      \'critical_time\' : %d }]"
-       ,journal->j_stats.ts_tid++
+       ,journal->j_stats.ts_tid
        ,t_updates
        ,commit_time
        ,critical_time);

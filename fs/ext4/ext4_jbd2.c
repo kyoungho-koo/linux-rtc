@@ -167,9 +167,11 @@ int __ext4_journal_get_write_access(const char *where, unsigned int line,
 
 	if (ext4_handle_valid(handle)) {
 		err = jbd2_journal_get_write_access(handle, bh);
-		if (err)
+		if (err) {
+		    printk("__ext4_journal_get_wrtie_access: abort handle error %d",err);
 			ext4_journal_abort_handle(where, line, __func__, bh,
 						  handle, err);
+		}
 	}
 	return err;
 }
@@ -268,6 +270,9 @@ int __ext4_handle_dirty_metadata(const char *where, unsigned int line,
 	if (ext4_handle_valid(handle)) {
 		err = jbd2_journal_dirty_metadata(handle, bh);
 		/* Errors can only happen due to aborted journal or a nasty bug */
+		if (err) {
+		  printk("__ext4_handle_dirty_metadata : err %d ",err);
+		}
 		if (!is_handle_aborted(handle) && WARN_ON_ONCE(err)) {
 			ext4_journal_abort_handle(where, line, __func__, bh,
 						  handle, err);
