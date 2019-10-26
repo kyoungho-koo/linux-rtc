@@ -202,7 +202,7 @@ static int add_transaction_credits(journal_t *journal, int blocks,
 	 */
 	if (t->t_state == T_LOCKED) {
 	    printk("wait in queue\n");
-		wait_transaction_locked(journal);
+		//wait_transaction_locked(journal);
 		return 1;
 	}
 
@@ -1011,6 +1011,7 @@ repeat:
 	 */
 	if (jh->b_jlist == BJ_Metadata || force_copy) {
 		JBUFFER_TRACE(jh, "generate frozen data");
+		printk("generate frozen data\n");
 		if (!frozen_buffer) {
 			JBUFFER_TRACE(jh, "allocate memory for buffer");
 			jbd_unlock_bh_state(bh);
@@ -1390,9 +1391,6 @@ int jbd2_journal_dirty_metadata(handle_t *handle, struct buffer_head *bh)
 	 */
 	jh = bh2jh(bh);
 	if ( journal-> j_rtc_transaction && jh->b_transaction == journal->j_rtc_transaction) {
-	  if( transaction != journal->j_running_transaction) {
-	    printk("jbd2_journal_dirty_metadata:!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-	  }
 	}
 
 	jbd_debug(5, "journal_head %p\n", jh);
@@ -1404,8 +1402,8 @@ int jbd2_journal_dirty_metadata(handle_t *handle, struct buffer_head *bh)
 	 * crucial to catch bugs so let's do a reliable check until the
 	 * lockless handling is fully proven.
 	 */
-	if (jh->b_transaction != journal->j_running_transaction &&
-	    jh->b_next_transaction != journal->j_running_transaction) {
+	if (jh->b_transaction != transaction &&
+	    jh->b_next_transaction != transaction) {
 	    /*printk("jbd2_journal_dirty_metadata: jh->b_transaction == rtc transaction jh : %p\n ,jh->b_transaction %p , jh->b_next_transaction %p \n", 
 		jh, jh->b_transaction, jh->b_next_transaction);
 
@@ -1419,7 +1417,9 @@ int jbd2_journal_dirty_metadata(handle_t *handle, struct buffer_head *bh)
 		*/
 	}
 	if(jh->b_transaction == journal->j_committing_transaction) {
-		 printk("jh->b_transaction == journal->j_committing_transaction\n");
+		 if (!jh->b_next_transaction){
+		     printk("jh->b_transaction == journal->j_committing_transaction\n");
+		 }
 	}
 
 
@@ -1469,8 +1469,8 @@ int jbd2_journal_dirty_metadata(handle_t *handle, struct buffer_head *bh)
 	 * I _think_ we're OK here with SMP barriers - a mistaken decision will
 	 * result in this test being false, so we go in and take the locks.
 	 */
-	//if (jh->b_transaction == transaction && jh->b_jlist == BJ_Metadata) {
-	  if (jh->b_transaction == journal->j_running_transaction && jh->b_jlist == BJ_Metadata) {
+	if (jh->b_transaction == transaction && jh->b_jlist == BJ_Metadata) {
+	//  if (jh->b_transaction == journal->j_running_transaction && jh->b_jlist == BJ_Metadata) {
 		JBUFFER_TRACE(jh, "fastpath");
 		if (unlikely(jh->b_transaction != journal->j_running_transaction)){
              printk(KERN_ERR "JBD2: %s: "
@@ -1502,8 +1502,8 @@ int jbd2_journal_dirty_metadata(handle_t *handle, struct buffer_head *bh)
 	 * be committing, and will be refiled once the commit completes:
 	 * leave it alone for now.
 	 */
-//	if (jh->b_transaction != transaction) {
-    if (jh->b_transaction != journal->j_running_transaction && jh->b_transaction != journal->j_rtc_transaction) {
+	if (jh->b_transaction != transaction) {
+//    if (jh->b_transaction != journal->j_running_transaction && jh->b_transaction != journal->j_rtc_transaction) {
 		JBUFFER_TRACE(jh, "already on other transaction");
 		if (unlikely(((jh->b_transaction != journal->j_committing_transaction) && 
 			          (jh->b_transaction != journal->j_rtc_transaction) ) )) {
@@ -2339,9 +2339,10 @@ static int journal_unmap_buffer(journal_t *journal, struct buffer_head *bh,
 		 * previous one's, so it is safe to throw it away
 		 * (remember that we expect the filesystem to have set
 		 * i_size already for this truncate so recovery will not
-		 * expose the disk blocks we are discarding here.) */
+		 * expose the disk blocks we are discarding here.) 
 		J_ASSERT_JH(jh, transaction == journal->j_running_transaction);
 		JBUFFER_TRACE(jh, "on running transaction");
+		*/
 		may_free = __dispose_buffer(jh, transaction);
 	}
 
