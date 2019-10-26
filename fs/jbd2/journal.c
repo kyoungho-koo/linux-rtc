@@ -436,6 +436,7 @@ repeat:
 			goto repeat;
 		}
 
+		printk("generate frozen data\n");
 		jh_in->b_frozen_data = tmp;
 		mapped_data = kmap_atomic(new_page);
 		memcpy(tmp, mapped_data + new_offset, bh_in->b_size);

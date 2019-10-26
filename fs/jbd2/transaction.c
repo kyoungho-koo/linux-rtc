@@ -978,6 +978,7 @@ repeat:
 	 * frozen_data copy in that case.
 	 */
 	if (jh->b_jlist == BJ_Metadata || force_copy) {
+		printk("generate frozen data\n");
 		JBUFFER_TRACE(jh, "generate frozen data");
 		if (!frozen_buffer) {
 			JBUFFER_TRACE(jh, "allocate memory for buffer");
