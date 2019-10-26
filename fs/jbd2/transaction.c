@@ -1410,10 +1410,6 @@ int jbd2_journal_dirty_metadata(handle_t *handle, struct buffer_head *bh)
 		jh, jh->b_transaction, jh->b_next_transaction);
 
 		*/
-		if(jh->b_transaction == journal->j_committing_transaction) {
-		  printk("J_ASSERT_JH(jh, jh->b_transaction == journal->j_running_transactionjh->b_transaction == journal->j_rtc_transaction);");
-		}
-
 		/*
 		jbd_lock_bh_state(bh);
 		J_ASSERT_JH(jh, jh->b_transaction == journal->j_running_transaction ||
@@ -1422,6 +1418,11 @@ int jbd2_journal_dirty_metadata(handle_t *handle, struct buffer_head *bh)
 		jbd_unlock_bh_state(bh);
 		*/
 	}
+	if(jh->b_transaction == journal->j_committing_transaction) {
+		 printk("jh->b_transaction == journal->j_committing_transaction\n");
+	}
+
+
 	if (jh->b_modified == 1) {
 		/* If it's in our transaction it must be in BJ_Metadata list. */
 		if (jh->b_transaction == journal->j_running_transaction &&
