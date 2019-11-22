@@ -436,7 +436,7 @@ repeat:
 			goto repeat;
 		}
 
-		printk("generate frozen data\n");
+		//printk("generate frozen data\n");
 		jh_in->b_frozen_data = tmp;
 		mapped_data = kmap_atomic(new_page);
 		memcpy(tmp, mapped_data + new_offset, bh_in->b_size);
@@ -769,6 +769,12 @@ int jbd2_complete_transaction(journal_t *journal, tid_t tid)
 		if (journal->j_commit_request != tid) {
 			/* transaction not yet started, so request it */
 			read_unlock(&journal->j_state_lock);
+			if ( journal->j_rtc_transaction ) {
+			  printk("tid: %d fsync in rtc\n",tid);
+			}
+			if ( journal->j_committing_transaction ) {
+			  //printk("tid: %d fsync in committing transaction %d %d\n",tid,journal->j_committing_transaction->t_state,journal->j_committing_transaction->t_tid);
+			}
 			jbd2_log_start_commit(journal, tid);
 			goto wait_commit;
 		}

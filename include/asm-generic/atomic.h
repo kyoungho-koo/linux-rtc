@@ -198,5 +198,6 @@ static inline void atomic_sub(int i, atomic_t *v)
 
 #define atomic_xchg(ptr, v)		(xchg(&(ptr)->counter, (v)))
 #define atomic_cmpxchg(v, old, new)	(cmpxchg(&((v)->counter), (old), (new)))
+#define atomic_cmpxchg_t(v, old, new)	(cmpxchg(&(v), (old), (new)))
 
 #endif /* __ASM_GENERIC_ATOMIC_H */

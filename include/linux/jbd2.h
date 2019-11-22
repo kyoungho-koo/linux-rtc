@@ -592,6 +592,12 @@ struct transaction_s
 	int			t_nr_buffers;
 
 	/*
+	 * Doubly-linked circular list of all buffers pipe
+	 * 
+	 */
+	struct journal_head *t_pipe_list;
+
+	/*
 	 * Doubly-linked circular list of all buffers reserved but not yet
 	 * modified by this transaction [j_list_lock]
 	 */
@@ -1011,6 +1017,11 @@ struct journal_s
 	 * @j_task: Pointer to the current commit thread for this journal.
 	 */
 	struct task_struct	*j_task;
+
+	/**
+	 * @j_pipe_task: Pointer to the current pipe commit thread for this journal
+	 */ 
+	struct task_struct  *j_pipe_task;
 
 	/**
 	 * @j_max_transaction_buffers:

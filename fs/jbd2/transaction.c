@@ -200,10 +200,10 @@ static int add_transaction_credits(journal_t *journal, int blocks,
 	 * If the current transaction is locked down for commit, wait
 	 * for the lock to be released.
 	 */
-	if (t->t_state >= T_LOCKED) {
+	//if (t->t_state >= T_LOCKED) {
 		//wait_transaction_locked(journal);
-		return 1;
-	}
+	//	return 1;
+	//}
 
 	/*
 	 * If there is not enough space left in the log to write all
@@ -1010,7 +1010,7 @@ repeat:
 	 */
 	if (jh->b_jlist == BJ_Metadata || force_copy) {
 		JBUFFER_TRACE(jh, "generate frozen data");
-		printk("generate frozen data\n");
+		//printk("generate frozen data\n");
 		if (!frozen_buffer) {
 			JBUFFER_TRACE(jh, "allocate memory for buffer");
 			jbd_unlock_bh_state(bh);

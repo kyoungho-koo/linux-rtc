@@ -118,6 +118,7 @@ static int journal_submit_commit_record(journal_t *journal,
 					struct buffer_head **cbh,
 					__u32 crc32_sum)
 {
+
 	struct commit_header *tmp;
 	struct buffer_head *bh;
 	int ret;
@@ -412,9 +413,7 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 	J_ASSERT(commit_transaction->t_state == T_RUNNING);
 
 	//printk("1. t_nr_buffers : %d , t_outstanding_credits : %d\n",commit_transaction->t_nr_buffers , atomic_read(&commit_transaction->t_outstanding_credits));
-    journal->j_running_transaction = NULL;
-    journal->j_rtc_transaction = commit_transaction;
-	commit_transaction->t_state = T_LOCKED;
+   	commit_transaction->t_state = T_LOCKED;
     //printk("2. t_nr_buffers : %d , t_outstanding_credits : %d\n",commit_transaction->t_nr_buffers ,atomic_read(&commit_transaction->t_outstanding_credits));
 
 
@@ -446,8 +445,14 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 		}
 		finish_wait(&journal->j_wait_updates, &wait);
 	}
+// future work
+//    atomic_cmpxchg_t ( journal->j_rtc_transaction , NULL, journal->j_running_transaction);
 	spin_unlock(&commit_transaction->t_handle_lock);
     critical_time = ktime_to_ns(ktime_sub(ktime_get(), critical_time));
+
+    journal->j_running_transaction = NULL;
+    journal->j_rtc_transaction = commit_transaction;
+
 
 	J_ASSERT (atomic_read(&commit_transaction->t_outstanding_credits) <=
 			journal->j_max_transaction_buffers);
@@ -535,7 +540,7 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 	  add_timer(&journal->j_commit_timer);
 	}
 */
-	printk("T_LOCKED done");
+	//printk("T_LOCKED done");
 	write_unlock(&journal->j_state_lock);
 
 	jbd_debug(3, "JBD2: commit phase 2a\n");
@@ -559,7 +564,7 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 	 * metadata.  Loop over the transaction's entire buffer list:
 	 */
 	write_lock(&journal->j_state_lock);
-	printk("T_COMMIT start");
+	//printk("T_COMMIT start");
 	commit_transaction->t_state = T_COMMIT;
 	write_unlock(&journal->j_state_lock);
 
@@ -1145,11 +1150,13 @@ restart_loop:
 	 * Calculate overall stats
 	 */
 	spin_lock(&journal->j_history_lock);
+	/*
     printk("[{ \'tid\' : %lu , \'t_updates\' : %d , \'commit_time\' : %d ,      \'critical_time\' : %d }]"
-       ,journal->j_stats.ts_tid
+       ,stats.ts_tid 
        ,t_updates
        ,commit_time
        ,critical_time);
+	   */
 	journal->j_stats.ts_tid++;
 	journal->j_stats.ts_requested += stats.ts_requested;
 	journal->j_stats.run.rs_wait += stats.run.rs_wait;

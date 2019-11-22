@@ -83,6 +83,8 @@ struct journal_head {
 	 */
 	struct journal_head *b_tnext, *b_tprev;
 
+	struct journal_head *b_pnext,*b_pprev;
+
 	/*
 	 * Pointer to the compound transaction against which this buffer
 	 * is checkpointed.  Only dirty buffers can be checkpointed.
