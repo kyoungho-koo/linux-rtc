@@ -488,6 +488,7 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 	spin_unlock(&journal->j_list_lock);
 
 	jbd_debug(3, "JBD2: commit phase 1\n");
+	printk("JBD2: commit phase 1\n");
 
 	/*
 	 * Clear revoked flag to reflect there is no revoked buffers
@@ -520,6 +521,7 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 	write_unlock(&journal->j_state_lock);
 
 	jbd_debug(3, "JBD2: commit phase 2a\n");
+	printk( "JBD2: commit phase 2a\n");
 
 	/*
 	 * Now start flushing things to disk, in the order they appear
@@ -533,6 +535,7 @@ void jbd2_journal_commit_transaction(journal_t *journal)
 	jbd2_journal_write_revoke_records(commit_transaction, &log_bufs);
 
 	jbd_debug(3, "JBD2: commit phase 2b\n");
+	printk( "JBD2: commit phase 2b\n");
 
 	/*
 	 * Way to go: we have now written out all of the data for a
@@ -789,6 +792,7 @@ start_journal_io:
 	*/
 
 	jbd_debug(3, "JBD2: commit phase 3\n");
+	printk( "JBD2: commit phase 3\n");
 
 	while (!list_empty(&io_bufs)) {
 		struct buffer_head *bh = list_entry(io_bufs.prev,
@@ -831,6 +835,7 @@ start_journal_io:
 	J_ASSERT (commit_transaction->t_shadow_list == NULL);
 
 	jbd_debug(3, "JBD2: commit phase 4\n");
+	printk( "JBD2: commit phase 4\n");
 
 	/* Here we wait for the revoke record and descriptor record buffers */
 	while (!list_empty(&log_bufs)) {
@@ -854,6 +859,7 @@ start_journal_io:
 		jbd2_journal_abort(journal, err);
 
 	jbd_debug(3, "JBD2: commit phase 5\n");
+	printk("JBD2: commit phase 5\n");
 	write_lock(&journal->j_state_lock);
 	J_ASSERT(commit_transaction->t_state == T_COMMIT_DFLUSH);
 	commit_transaction->t_state = T_COMMIT_JFLUSH;
@@ -889,6 +895,7 @@ start_journal_io:
            before. */
 
 	jbd_debug(3, "JBD2: commit phase 6\n");
+	printk( "JBD2: commit phase 6\n");
 
 	J_ASSERT(list_empty(&commit_transaction->t_inode_list));
 	J_ASSERT(commit_transaction->t_buffers == NULL);
@@ -1058,6 +1065,7 @@ restart_loop:
 	/* Done with this transaction! */
 
 	jbd_debug(3, "JBD2: commit phase 7\n");
+	printk("JBD2: commit phase 7\n");
 
 	J_ASSERT(commit_transaction->t_state == T_COMMIT_JFLUSH);
 
